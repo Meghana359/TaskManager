@@ -1,108 +1,126 @@
-'''
-Bootstrap program
-'''
+from flask import render_template, make_response
+from flask_restx import Resource, Namespace
+from flask_login import login_required
 
-# import os
-from flask_restx import Resource, Api
-# from Models.task import Task
-from __init__ import db
-from __init__ import create_app
-from routes.tasks import model_get_create_task, model_post_create_task
-from routes.tasks import model_fetch_task, model_get_update_task
-from routes.tasks import model_post_update_task, model_delete_task
-from routes.users import model_get_create_user, model_post_create_user
-from routes.users import model_fetch_user, model_get_update_user
-from routes.users import model_post_update_user, model_delete_user
+from task_manager import apis
+import task_manager.routes.tasks as tasks
+import task_manager.routes.users as users
+import task_manager.routes.auth as auth
+
+user_ns = Namespace('user', description='User API endpoints')
+task_ns = Namespace('task', description='Task API endpoints')
 
 
-app = create_app()
-api = Api(app)                          # Create a Flask-RESTPlus API
-
-@api.route('/')
-@api.route('/hello')                   # Create a URL route to this resource
-class HelloWorld(Resource):            # Create a RESTful resource
-	''' HOME PAGE '''
-	def get(self):                     # Create GET endpoint
-		return {'hello': 'world'}
-
-  
-@api.route('/task/create', methods=['GET', 'POST'])
-class CreateTask(Resource):
-	''' CREATE NEW TASK '''
-	def get(self):
-		# return {'Show': 'Form'}
-		return model_get_create_task()
-
-	def post(self):
-		# return {'Create':'Task'}
-		return model_post_create_task()
+#@apis.route('/test', methods=['GET'])
+#class Test(Resource):
+#    def get(self):
+#       return "Hello World"
 
 
-@api.route('/task/')
-@api.route('/task/<int:task_id>')
+@apis.route('/')
+@apis.route('/dashboard')  # dashboard
+class Index(Resource):
+    '''If logged in display index, else display homepage'''
+
+    @login_required
+    def get(self):
+        return make_response(render_template("dashboard.html",
+                                             title='Home Page'))
+
+
+@apis.route('/register')
+class Register(Resource):
+    '''SIGN UP'''
+
+    def get(self):
+        return auth.register()
+
+    def post(self):
+        return auth.register()
+
+
+@apis.route('/login')
+class Login(Resource):
+    '''LOG USER IN'''
+
+    def get(self):
+        return auth.login()
+
+    def post(self):
+        return auth.login()
+
+
+@apis.route('/logout')
+class Logout(Resource):
+    '''LOG USER OUT'''
+
+    @login_required
+    def get(self):
+        return auth.logout()
+
+
+@task_ns.route('/')
+@task_ns.route('/<int:task_id>')
 class FetchTask(Resource):
-	''' FETCH TASK '''
-	def get(self, task_id = -1):
-		return model_fetch_task(task_id)
+    ''' FETCH TASK '''
+
+    def get(self, task_id=-1):
+        return tasks.model_fetch_task(task_id)
 
 
-@api.route('/task/edit/<int:task_id>', methods=['GET', 'POST'])
+@task_ns.route('/create', methods=['GET', 'POST'])
+class CreateTask(Resource):
+    ''' CREATE NEW TASK '''
+
+    def get(self):
+        return tasks.model_get_create_task()
+
+    def post(self):
+        return tasks.model_post_create_task()
+
+
+@task_ns.route('/update/<int:task_id>', methods=['GET', 'POST'])
 class UpdateTask(Resource):
-	''' UPDATE TASK '''
-	def get(self, task_id):
-		# return {'Show': 'Form'}
-		return model_get_update_task(task_id)
+    ''' UPDATE TASK '''
 
-	def post(self, task_id):
-		# return {'Update':'Task'}
-		return model_post_update_task(task_id)
+    def get(self, task_id):
+        return tasks.model_get_update_task(task_id)
+
+    def post(self, task_id):
+        return tasks.model_post_update_task(task_id)
 
 
-@api.route('/task/delete/<int:task_id>', methods=['GET', 'POST'])
+@task_ns.route('/delete/<task_id>', methods=['GET', 'POST'])
 class DeleteTask(Resource):
-	def get(self, task_id):
-		# return 'Task %d' % task_id
-		return model_delete_task(task_id)
+    def get(self, task_id):
+        return tasks.model_delete_task(task_id)
 
 
-@api.route('/user/create', methods=['GET', 'POST'])
-class CreateUser(Resource):
-	def get(self):
-		# return {'Show':'Form'}
-		return model_get_create_user()
-
-	def post(self):
-		# return {'create':'user'}
-		return model_post_create_user()
+@user_ns.route('/<int:user_id>')
+class GetUser(Resource):
+    def get(self, user_id):
+        return users.get_user(user_id)
 
 
-@api.route('/user/')
-@api.route('/user/<int:user_id>')
-class FetchUser(Resource):
-	def get(self, user_id = -1):
-		# return {'User': user_id}
-		return model_fetch_user(user_id)
+#@user_ns.route('/')
+#class GetUsers(Resource):
+#    def get(self):
+#        return users.get_users()
 
 
-@api.route('/user/edit/<int:user_id>', methods=['GET', 'POST'])
+@user_ns.route('/edit/<int:user_id>', methods=['GET', 'POST'])
 class UpdateUser(Resource):
-	def get(self,user_id):
-		# return {'Show':'Form'}
-		return model_get_update_user(user_id)
+    def get(self, user_id):
+        return users.form_update_user(user_id)
 
-	def post(self,user_id):
-		# return {'update':'user'}
-		return model_post_update_user(user_id)
+    def post(self, user_id):
+        return users.update_user(user_id)
 
 
-@api.route('/user/delete/<int:user_id>', methods=['PUT', 'DELETE'])
-# I dont know if I want to do DELETE or PUT
+@user_ns.route('/delete/<int:user_id>')
 class DeleteUser(Resource):
-	def delete(self,user_id):
-		# return 'User %d' % user_id
-		return model_delete_user(user_id)
+    def get(self, user_id):
+        return users.delete_user(user_id)
 
-
-if __name__ == '__main__':
-	db.create_all()
-	app.run(debug=True)		# Start a development server
+    def post(self, user_id):
+        return users.delete_user(user_id)

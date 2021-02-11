@@ -1,1 +1,2 @@
-web: gunicorn app:task_manager
+web: flask db migrate; flask db upgrade; gunicorn "wsgi:app"
+

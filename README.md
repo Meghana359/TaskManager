@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/SemicolonExpected/TaskManager.svg?branch=master)](https://travis-ci.com/SemicolonExpected/TaskManager)
+
 # TaskManager
 Time and Task Management Tool
 
@@ -38,11 +40,11 @@ or if you're using an ssh key
 - git clone git@github.com:SemicolonExpected/TaskManager.git
 
 
-To build run `make prod`
+To build and push to github run `make prod`
 
 To build for development run `make dev_env`
 
-To check out the web page [IP Address]/task/
+To start dev environment run `make run_dev`
 
 <!--
     mkdir source
@@ -56,3 +58,21 @@ from flask-restx Resource, Api
 
 app = Flask(__name__)
 api = API(-->
+
+# Heroku 
+Heroku deployment instructions:
+
+`heroku login`
+
+`heroku git:remote -a <app instance>`
+
+`git add .`
+
+`git commit -am <commit message>`
+
+`git push heroku <local branch>:main`
+
+Postgres database migration:
+`heroku run flask db upgrade`
+
+Try out Task Manager on: https://t4sk-manag3r.herokuapp.com/dashboard
